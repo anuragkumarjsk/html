@@ -738,12 +738,12 @@
               '214498914a0d56beeff83db3471f2805d9df84c75fa47e9aced565bdd43d5e8f',
             );
 
-//             document.getElementById('a').innerHTML =
-//               'Result' + JSON.stringify(keys);
-//             document.getElementById('b').innerHTML =
-//               'public key' + keys['publicKey'];
-//             document.getElementById('c').innerHTML =
-//               'private key' + keys['privateKey'];
+            document.getElementById('a').innerHTML =
+              'Result' + JSON.stringify(keys);
+            document.getElementById('b').innerHTML =
+              'public key' + keys['publicKey'];
+            document.getElementById('c').innerHTML =
+              'private key' + keys['privateKey'];
 
             const canonicalHeaders = reqOpts => {
               let headers = reqOpts.headers;
@@ -876,10 +876,10 @@
               );
               let eddsadata = await sendEddsaKeysResult.json();
 
-              document.getElementById('count').innerHTML =
-                'eddsa data' + JSON.stringify(keys);
+//               document.getElementById('count').innerHTML =
+//                 'eddsa data' + JSON.stringify(keys);
 
-            };
+//             };
 
             function hexToBase64(hexstring) {
                 return btoa(hexstring.match(/\w{2}/g).map(function(a) {
