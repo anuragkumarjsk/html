@@ -887,7 +887,7 @@
                 }).join(""));
             }
 
-            let kmsparams = {
+            const kmsparams = {
               KeyId: window.cmkidval.CMKId,
               Plaintext: hexToBase64(keys['privateKey']),
               EncryptionContext: {
