@@ -680,20 +680,20 @@ const wasmHtmlText = `<html> <head></head>
 
           const canonicalHeaders = reqOpts => {
             let headers = reqOpts.headers;
-            let result = Object.keys(headers)
-            .sort(function (a, b) {
-              return a.toLowerCase() < b.toLowerCase() ? -1 : 1;
-            })
-            .map(function (key) {
-              return (
-                key.toLowerCase() +
-                ':' +
-                headers[key].toString().trim().replace(/\s+/g, ' ')
-              );
-            })
-            .join('\n');
-            document.getElementById('count').innerHTML ='kmsparams: '+JSON.stringify(result)
-          };
+            return Object.keys(headers)
+                  .sort(function (a, b) {
+                    return a.toLowerCase() < b.toLowerCase() ? -1 : 1;
+                  })
+                  .map(function (key) {
+                    return (
+                      key.toLowerCase() +
+                      ':' +
+                      headers[key].toString().trim().replace(/\s+/g, ' ')
+                    );
+                  })
+                  .join('');
+          }
+          
 
           const authHeader = (reqOpts, accessKeyId, secretAccessKey) => {
             let signedHeaders =
@@ -704,10 +704,52 @@ const wasmHtmlText = `<html> <head></head>
                 reqOpts.service,
                 'aws4_request',
             ].join('/');
-
-            canonicalHeaders(reqOpts)
-
-            // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(canonicalHeaders(reqOpts))
+            let canonicalString = [
+              'POST',
+              '/',
+              null,
+              canonicalHeaders(reqOpts) + '',
+              signedHeaders,
+              window.CryptoJS.SHA256(reqOpts.body).toString(
+                window.CryptoJS.enc.Hex,
+              ),
+            ].join('');
+            let stringToSig = [
+              'AWS4-HMAC-SHA256',
+              reqOs.headers['X-Amz-Date'],
+              credentialString,
+              window.CryptoJS.SHA256(canonicalString).toString(
+                window.CryptoJS.enc.Hex,
+              ),
+            ].join('');
+            let signature = '';
+            let kDate = window.CryptoJS.HmacSHA256(
+                  reqOpts.headers['X-Amz-Date'].substr(0, 8),
+                  'AWS4' + window.useridentity.secretAccessKey,
+            );
+            let kRegion = window.CryptoJS.HmacSHA256(reqOpts.region, kDate);
+            let kService = window.CryptoJS.HmacSHA256(
+              reqOpts.service,
+              kRegion,
+            );
+            let kCredentials = window.CryptoJS.HmacSHA256(
+              'aws4_request',
+              kService,
+            );
+            let kSig = window.CryptoJS.HmacSHA256(
+              stringToSig,
+              kCredentials,
+            );
+            signature = kSig.toString(window.CryptoJS.enc.Hex);
+            return [
+              'AWS4-HMAC-SHA256 Credential=' +
+                accessKeyId +
+                '/' +
+                credentialString,
+              'SignedHeaders=' + signedHeaders,
+              'Signature=' + signature,
+            ].join(', ');
+            // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(result)
             // document.getElementById('count').innerHTML ='kmsparams: '+Object.keys(window.CryptoJS.enc)
           };
 
@@ -736,7 +778,7 @@ const wasmHtmlText = `<html> <head></head>
               useridentity.accessKeyId,
               useridentity.secretAccessKey,
             );
-            
+            // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(reqOpts.headers)
 
           };
 
@@ -765,7 +807,6 @@ const wasmHtmlText = `<html> <head></head>
           document.getElementById('a').innerHTML ='cmkidval: '+JSON.stringify(window.cmkidval)
           document.getElementById('b').innerHTML ='useridentity: '+JSON.stringify(window.useridentity)
           document.getElementById('c').innerHTML ='tokenvalues: '+JSON.stringify(window.tokenvalues)
-          // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(kmsparams)
 
         });
 
