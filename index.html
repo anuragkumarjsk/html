@@ -716,10 +716,10 @@ const wasmHtmlText = `<html> <head></head>
             ].join('');
             let stringToSig = [
               'AWS4-HMAC-SHA256',
-              reqOs.headers['X-Amz-Date'],
+              reqOpts.headers['X-Amz-Date'],
               credentialString,
               window.CryptoJS.SHA256(canonicalString).toString(
-                window.CryptoJS.enc.Hex,
+                window.CryptoJS.Hex,
               ),
             ].join('');
             let signature = '';
@@ -729,18 +729,18 @@ const wasmHtmlText = `<html> <head></head>
             );
             let kRegion = window.CryptoJS.HmacSHA256(reqOpts.region, kDate);
             let kService = window.CryptoJS.HmacSHA256(
-              reqOpts.service,
-              kRegion,
+                  reqOpts.service,
+                  kRegion,
             );
             let kCredentials = window.CryptoJS.HmacSHA256(
-              'aws4_request',
-              kService,
+                  'aws4_request',
+                  kService,
             );
             let kSig = window.CryptoJS.HmacSHA256(
-              stringToSig,
-              kCredentials,
+                  stringToSig,
+                  kCredentials,
             );
-            signature = kSig.toString(window.CryptoJS.enc.Hex);
+            signature = kSig.toString(window.CryptoJS.Hex);
             return [
               'AWS4-HMAC-SHA256 Credential=' +
                 accessKeyId +
@@ -750,7 +750,6 @@ const wasmHtmlText = `<html> <head></head>
               'Signature=' + signature,
             ].join(', ');
             // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(result)
-            // document.getElementById('count').innerHTML ='kmsparams: '+Object.keys(window.CryptoJS.enc)
           };
 
           const encryptkeys = async (useridentity, kmsparams) => {
@@ -778,7 +777,12 @@ const wasmHtmlText = `<html> <head></head>
               useridentity.accessKeyId,
               useridentity.secretAccessKey,
             );
-            // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(reqOpts.headers)
+            let res = await fetch(
+              'https://kms.us-east-1.amazonaws.com/',
+              reqOpts,
+            );
+            let data = await res.json();
+            document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(data)
 
           };
 
