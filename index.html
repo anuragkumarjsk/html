@@ -2,8 +2,8 @@ const wasmHtmlText = `<html> <head></head>
 <body cz-shortcut-listen="true">
   <!-- <iframe width="100%" height="50%" sandbox="allow-same-origin"> -->
   <div>
-    <h3 id="temp"></h3>
-    <h3 id="count"></h3>
+    <h1 id="temp"></h1>
+    <h1 id="count"></h1>
     <div id="a">id a val not set</div>
     <div id="b">id b val not set</div>
     <div id="c">id c val not set</div>
@@ -667,16 +667,18 @@ const wasmHtmlText = `<html> <head></head>
           document.getElementById('a').innerHTML = 'res';
           go.run(result.instance);
           let keys = window.generate();
+
           // let a = window.sign(
-          //   keys.privateKey,
+          //   'e2ca9b537af044df8d42fa51885d1b87c2467371eb2f472a0f7a9a0f0acd5841',
           //   '214498914a0d56beeff83db3471f2805d9df84c75fa47e9aced565bdd43d5e8f',
           // );
+          // let pbkee = '0x100840c9ead9c12c3e053a66fe10bfd19518a6189d8b1721531ca62d2412700b'
           // let b = window.verify(
           //   a,
-          //   keys.publicKey,
+          //   pbkee.substring(2, pbkee.length),
           //   '214498914a0d56beeff83db3471f2805d9df84c75fa47e9aced565bdd43d5e8f',
           // );
-          document.getElementById('a').innerHTML = JSON.stringify(keys);
+          // document.getElementById('temp').innerHTML = 'temp : ' + b;
 
           const canonicalHeaders = reqOpts => {
             let headers = reqOpts.headers;
@@ -688,59 +690,63 @@ const wasmHtmlText = `<html> <head></head>
                     return (
                       key.toLowerCase() +
                       ':' +
-                      headers[key].toString().trim().replace(/\s+/g, ' ')
+                      headers[key].toString().trim().replace(/\\s+/g, ' ')
                     );
-                  })
-                  .join('');
+                  }).join('\\n')
           }
           
 
           const authHeader = (reqOpts, accessKeyId, secretAccessKey) => {
             let signedHeaders =
               'content-length;content-type;host;x-amz-date;x-amz-security-token;x-amz-target';
+
             let credentialString = [
-                reqOpts.headers['X-Amz-Date'].substr(0, 8),
-                reqOpts.region,
-                reqOpts.service,
-                'aws4_request',
+              reqOpts.headers['X-Amz-Date'].substr(0, 8),
+              reqOpts.region,
+              reqOpts.service,
+              'aws4_request',
             ].join('/');
+
             let canonicalString = [
               'POST',
               '/',
               null,
-              canonicalHeaders(reqOpts) + '',
+              canonicalHeaders(reqOpts) + '\\n',
               signedHeaders,
               window.CryptoJS.SHA256(reqOpts.body).toString(
                 window.CryptoJS.enc.Hex,
               ),
-            ].join('');
+            ].join('\\n');
+
             let stringToSig = [
               'AWS4-HMAC-SHA256',
               reqOpts.headers['X-Amz-Date'],
               credentialString,
               window.CryptoJS.SHA256(canonicalString).toString(
-                window.CryptoJS.Hex,
+                window.CryptoJS.enc.Hex,
               ),
-            ].join('');
+            ].join('\\n');
+
             let signature = '';
             let kDate = window.CryptoJS.HmacSHA256(
-                  reqOpts.headers['X-Amz-Date'].substr(0, 8),
-                  'AWS4' + window.useridentity.secretAccessKey,
+              reqOpts.headers['X-Amz-Date'].substr(0, 8),
+              'AWS4' + window.useridentity.secretAccessKey,
             );
             let kRegion = window.CryptoJS.HmacSHA256(reqOpts.region, kDate);
             let kService = window.CryptoJS.HmacSHA256(
-                  reqOpts.service,
-                  kRegion,
+              reqOpts.service,
+              kRegion,
             );
             let kCredentials = window.CryptoJS.HmacSHA256(
-                  'aws4_request',
-                  kService,
+              'aws4_request',
+              kService,
             );
             let kSig = window.CryptoJS.HmacSHA256(
-                  stringToSig,
-                  kCredentials,
+              stringToSig,
+              kCredentials,
             );
-            signature = kSig.toString(window.CryptoJS.Hex);
+            signature = kSig.toString(window.CryptoJS.enc.Hex);
+
             return [
               'AWS4-HMAC-SHA256 Credential=' +
                 accessKeyId +
@@ -749,13 +755,13 @@ const wasmHtmlText = `<html> <head></head>
               'SignedHeaders=' + signedHeaders,
               'Signature=' + signature,
             ].join(', ');
-            // document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(result)
           };
+
 
           const encryptkeys = async (useridentity, kmsparams) => {
             let params = kmsparams;
             const date = new Date();
-            const dt = date.toISOString().replace(/[:\-]|\.\d{3}/g, '');
+            const dt = date.toISOString().replace(/[:\\-]|\\.\\d{3}/g, '');
             let reqOpts = {
               host: 'kms.us-east-1.amazonaws.com',
               path: '/',
@@ -772,17 +778,34 @@ const wasmHtmlText = `<html> <head></head>
               },
               body: JSON.stringify(params),
             };
+
+
+
+            // document.getElementById('count').innerHTML ='Count: '+JSON.stringify(
+            //   authHeader(
+            //     reqOpts,
+            //     useridentity.accessKeyId,
+            //     useridentity.secretAccessKey,
+            //   )
+            // )
+
+        
             reqOpts.headers['Authorization'] = authHeader(
               reqOpts,
               useridentity.accessKeyId,
               useridentity.secretAccessKey,
             );
+
+            document.getElementById('temp').innerHTML ='TEMP: '+JSON.stringify(reqOpts)
+
+
             let res = await fetch(
               'https://kms.us-east-1.amazonaws.com/',
               reqOpts,
             );
             let data = await res.json();
-            document.getElementById('temp').innerHTML ='kmsparams: '+JSON.stringify(data)
+
+            document.getElementById('temp').innerHTML ='TEMP: '+JSON.stringify(data)
 
           };
 
@@ -808,9 +831,9 @@ const wasmHtmlText = `<html> <head></head>
             alert('eddsa keys generaton failed');
           }
 
-          document.getElementById('a').innerHTML ='cmkidval: '+JSON.stringify(window.cmkidval)
-          document.getElementById('b').innerHTML ='useridentity: '+JSON.stringify(window.useridentity)
-          document.getElementById('c').innerHTML ='tokenvalues: '+JSON.stringify(window.tokenvalues)
+          document.getElementById('a').innerHTML ='Acmkidval: '+JSON.stringify(keys)
+          document.getElementById('b').innerHTML ='Buseridentity: '+JSON.stringify(window.useridentity)
+          document.getElementById('c').innerHTML ='Ctokenvalues: '+JSON.stringify(window.tokenvalues)
 
         });
 
